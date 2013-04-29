@@ -64,7 +64,7 @@ module Rack
 
     def insert_honeypot(body)
       body = response_body(body)
-      body.gsub!(/<form(.*)>/, '<form\1>' + "\n" + container)
+      body.gsub!(/<form(.*?)>/, '<form\1>' + "\n" + container)
       body
     end
 
