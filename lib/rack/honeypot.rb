@@ -9,6 +9,7 @@ module Rack
     def initialize(app, options={})
       @app = app
 
+      @container      = options[:container] || "div"
       @class_name     = options[:class_name] || "phonetoy"
       @label          = options[:label] || "Don't fill in this field"
       @input_name     = options[:input_name] || "email"
@@ -43,11 +44,11 @@ module Rack
       header = headers.delete(HONEYPOT_HEADER)
       header && header.index("enabled")
     end
-    
+
     def null_response
       [200, {'Content-Type' => 'text/html', "Content-Length" => "0"}, []]
     end
-    
+
     def response_body(response)
       body = ""
 
@@ -56,7 +57,7 @@ module Rack
 
       body
     end
-    
+
     def response_headers(headers, body)
       headers.merge("Content-Length" => body.length.to_s)
     end
@@ -64,26 +65,26 @@ module Rack
     def insert_honeypot(body)
       body = response_body(body)
       body.gsub!(/<\/head>/, css + "\n</head>")
-      body.gsub!(/<form(.*)>/, '<form\1>' + "\n" + div)
+      body.gsub!(/<form(.*)>/, '<form\1>' + "\n" + container)
       body
     end
 
     def css
       unindent <<-BLOCK
         <style type='text/css' media='all'>
-          div.#{@class_name} {
+          #{@container}.#{@class_name} {
             display:none;
           }
         </style>
       BLOCK
     end
 
-    def div
+    def container
       unindent <<-BLOCK
-        <div class='#{@class_name}'>
+        <#{@container} class='#{@class_name}'>
           <label for='#{@input_name}'>#{@label}</label>
           <input type='text' name='#{@input_name}' value='#{@input_value}'/>
-        </div>
+        </#{@container}>
       BLOCK
     end
 
