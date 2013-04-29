@@ -1,6 +1,6 @@
 require 'rack/test'
 require 'test/unit'
-require 'mocha'
+require 'mocha/setup'
 require 'unindentable'
 
 require File.expand_path(File.dirname(__FILE__) + '/../lib/rack/honeypot')
@@ -47,19 +47,14 @@ class HoneypotTest < Test::Unit::TestCase
     assert_not_equal '', last_response.body
   end
 
-  def test_request_with_form_should_add_honeypot_css
+  def test_request_with_form_should_add_honeypot_container
     get '/'
     assert_equal 200, last_response.status
-    assert includes_honeypot_css?
+
+    assert includes_honeypot?
+    assert includes_style?
   end
 
-  def test_request_with_form_should_add_honeypot_div
-    get '/'
-    assert_equal 200, last_response.status
-  
-    assert includes_honeypot?
-  end
-  
   def test_spam_request_should_be_sent_to_dead_end
     post '/', :honeypot_email => 'joe@example.com'
     assert_equal 200, last_response.status
@@ -78,7 +73,7 @@ class HoneypotTest < Test::Unit::TestCase
 
     assert_equal 200, last_response.status
     assert !includes_honeypot?
-    assert !includes_honeypot_css?
+    assert !includes_style?
   end
 
   def test_should_inject_honeypot_if_not_always_enabled_but_honeypot_header_present
@@ -89,32 +84,37 @@ class HoneypotTest < Test::Unit::TestCase
 
     assert_equal 200, last_response.status
     assert includes_honeypot?
-    assert includes_honeypot_css?
+    assert includes_style?
+  end
+
+  def test_custom_container_honored
+    @container = 'div'
+
+    get '/'
+
+    assert_equal 200, last_response.status
+    assert includes_custom_container?
   end
 
   private
 
   def includes_honeypot?
-    div = unindent <<-BLOCK
-      <div class='phonetoy'>
+    container = unindent <<-BLOCK
+      <span class='phonetoy' style='display: none;'>
         <label for='honeypot_email'>Don't fill in this field</label>
         <input type='text' name='honeypot_email' value=''/>
-      </div>
+      </span>
     BLOCK
 
-    last_response.body.index(div) != nil
+    last_response.body.index(container) != nil
   end
 
-  def includes_honeypot_css?
-    css = unindent <<-BLOCK
-      <style type='text/css' media='all'>
-        div.phonetoy {
-          display:none;
-        }
-      </style>
-    BLOCK
-
-    last_response.body.index(css) != nil
+  def includes_custom_container?
+    last_response.body.index('span') != nil
   end
-    
+
+  def includes_style?
+    last_response.body.index("style='display: none;'") != nil
+  end
+
 end

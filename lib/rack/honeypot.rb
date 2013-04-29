@@ -9,7 +9,7 @@ module Rack
     def initialize(app, options={})
       @app = app
 
-      @container      = options[:container] || "div"
+      @container      = options[:container] || "span"
       @class_name     = options[:class_name] || "phonetoy"
       @label          = options[:label] || "Don't fill in this field"
       @input_name     = options[:input_name] || "email"
@@ -64,24 +64,13 @@ module Rack
 
     def insert_honeypot(body)
       body = response_body(body)
-      body.gsub!(/<\/head>/, css + "\n</head>")
       body.gsub!(/<form(.*)>/, '<form\1>' + "\n" + container)
       body
     end
 
-    def css
-      unindent <<-BLOCK
-        <style type='text/css' media='all'>
-          #{@container}.#{@class_name} {
-            display:none;
-          }
-        </style>
-      BLOCK
-    end
-
     def container
       unindent <<-BLOCK
-        <#{@container} class='#{@class_name}'>
+        <#{@container} class='#{@class_name}' style='display: none;'>
           <label for='#{@input_name}'>#{@label}</label>
           <input type='text' name='#{@input_name}' value='#{@input_value}'/>
         </#{@container}>
